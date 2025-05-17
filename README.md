@@ -56,7 +56,7 @@ Aquest model permet una escalabilitat i mantenibilitat elevades, amb components 
 ---
 
 ##  Estructura del projecte
-
+```
 TaskFlow/
 ├── backend/
 │   ├── users/             # Servei d’usuaris (FastAPI)
@@ -65,7 +65,7 @@ TaskFlow/
 │   └── vue-app/           # Interfície web (en construcció)
 ├── requirements.txt       # Dependències de Python
 ├── README.md              # Documentació del projecte
-
+```
 ---
 
 ## Funcionalitats previstes
