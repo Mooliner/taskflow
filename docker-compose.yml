@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: taskflow
+      MONGO_INITDB_ROOT_PASSWORD: R3Co0hNU414lomzP
+    restart: unless-stopped
+
+  users_service:
+    build: ./backend/users_service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/users_service:/app
+    environment:
+      MONGODB_URI: mongodb://taskflow:R3Co0hNU414lomzP@mongodb:27017/taskFlow?authSource=admin
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  tasks_service:
+    build: ./backend/tasks_service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./backend/tasks_service:/app
+    environment:
+      MONGODB_URI: mongodb://taskflow:R3Co0hNU414lomzP@mongodb:27017/taskFlow?authSource=admin
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

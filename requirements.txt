@@ -1,2 +1,8 @@
 fastapi
 uvicorn
+pymongo
+passlib[bcrypt]
+python-jose
+aio_pika
+websockets 
+httpx
