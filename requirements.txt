@@ -1,3 +1,8 @@
-python3 -m venv venv
-source venv/bin/activate   # o venv\Scripts\activate a Windows
-pip install -r user-service/requirements.txt
+fastapi
+uvicorn[standard]
+pymongo
+python-jose[cryptography]
+passlib[bcrypt]
+pydantic
+email-validator
+pika
