@@ -78,3 +78,46 @@ Sistema de notificacions amb RabbitMQ
 Control d’estats i coherència
 
 Integració completa entre serveis
+
+# Sessions
+Tota la documentació de les diferents sessions.
+
+## Sessió 2 [15/05]: Disseny detallat i desenvolupament inicial
+
+Presentació PDF: https://publuu.com/flip-book/882888/1933906
+
+## Sessió 3 [19/05]: Prototip funcional bàsic
+
+### Codi font actualitzat amb les funcionalitats implementades
+Hem implementat els tres microserveis principal: users, tasks i notificacions
+
+- Users: Podem iniciar sessio i registrar-nos.
+- Tasks: Podem afegir, actualitzar i llistar les tasques.
+- Notificacions: Tenom les notificacions a temps real.
+
+### Canvis respecte a la proposta inicial
+
+- No s’han introduït canvis importants respecte a les tecnologies definides inicialment.
+- S’ha mantingut l’ús de FastAPI, MongoDB i RabbitMQ.
+- El sistema de notificacions s’ha implementat amb WebSockets en lloc de polling, per oferir notificacions en temps real.
+- S’ha afegit hashing de contrasenyes i autenticació JWT per protegir l’accés dels usuaris.
+
+### Proposta de desplegament
+
+El sistema es desplegarà utilitzant Docker. Cada microservei (usuaris, tasques i notificacions) tindrà el seu propi contenidor, juntament amb MongoDB i RabbitMQ.
+
+Utilitzarem `docker-compose` per orquestrar els serveis:
+
+- `users_service`: servei d’autenticació i registre.
+- `tasks_service`: gestió de tasques i publicació a RabbitMQ.
+- `notifications_service`: WebSocket i consumidor RabbitMQ.
+- `mongo`: base de dades compartida entre serveis.
+- `rabbitmq`: missatgeria per les notificacions.
+
+Aquesta arquitectura permet fàcil escalabilitat. Per exemple, es poden replicar els serveis i afegir un balancejador de càrrega al front.
+
+Monitoratge: s’hi podrà afegir un servei com Prometheus + Grafana per monitorar rendiment en entorns més grans.
+
+### Presentació de l’arquitectura
+
+Enllaç: https://publuu.com/flip-book/882888/1934217
