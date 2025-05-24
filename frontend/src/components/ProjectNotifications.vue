@@ -1,57 +1,34 @@
-<!-- src/components/ProjectNotifications.vue -->
 <template>
-  <div class="notifications">
-    <h3>🔔 Notificacions</h3>
+  <div>
+    <h3>Notifications</h3>
     <ul>
-      <li v-for="(msg, idx) in messages" :key="idx">
-        {{ formatMessage(msg) }}
-      </li>
+      <li v-for="(notif, i) in notifications" :key="i">{{ notif }}</li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-const messages = ref([])
-let socket = null
+const notifications = ref([])
+const ws = ref(null)
 
-function connectWebSocket() {
+onMounted(() => {
   const token = localStorage.getItem('token')
-  socket = new WebSocket(`ws://localhost:8000/ws/notifications?token=${token}`)
+  if (!token) return
 
-  socket.onmessage = event => {
-    try {
-      const message = JSON.parse(event.data)
-      messages.value.unshift(message)
-    } catch {
-      messages.value.unshift({ content: event.data })
-    }
+  ws.value = new WebSocket(`ws://localhost:8000/ws/notifications?token=${token}`)
+
+  ws.value.onmessage = event => {
+    notifications.value.push(event.data)
   }
 
-  socket.onclose = () => {
-    console.warn('WebSocket tancat. Reintentant en 3s...')
-    setTimeout(connectWebSocket, 3000)
+  ws.value.onclose = () => {
+    console.log('WebSocket closed')
   }
-}
+})
 
-function formatMessage(msg) {
-  return msg?.content || JSON.stringify(msg)
-}
-
-onMounted(connectWebSocket)
 onBeforeUnmount(() => {
-  if (socket) socket.close()
+  if (ws.value) ws.value.close()
 })
 </script>
-
-<style scoped>
-.notifications {
-  background: #eef;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-</style>
