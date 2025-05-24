@@ -6,6 +6,10 @@ from models.task import TaskCreate, TaskUpdate
 from models.project import ProjectInDB
 from db.mongo import tasks_collection, projects_collection
 from services.notification import publish_notification
+from models.comment import CommentCreate, CommentOut
+from typing import List
+
+
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -76,3 +80,32 @@ def list_tasks(project_id: str, user=Depends(get_current_user)):
     check_user_project_access(user.email, project_id)
     tasks_cursor = tasks_collection.find({"project_id": project_id})
     return [{**task, "_id": str(task["_id"])} for task in tasks_cursor]
+
+@router.post("/{task_id}/comments", response_model=List[CommentOut])
+def add_comment(task_id: str, comment: CommentCreate, user=Depends(get_current_user)):
+    task = tasks_collection.find_one({"_id": ObjectId(task_id)})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    check_user_project_access(user.email, task["project_id"])
+    
+    comment_data = {
+        "author": user.email,
+        "content": comment.content,
+        "created_at": datetime.utcnow()
+    }
+    
+    tasks_collection.update_one(
+        {"_id": ObjectId(task_id)},
+        {"$push": {"comments": comment_data}}
+    )
+    
+    updated_task = tasks_collection.find_one({"_id": ObjectId(task_id)})
+    return updated_task.get("comments", [])
+
+@router.get("/{task_id}/comments", response_model=List[CommentOut])
+def get_comments(task_id: str, user=Depends(get_current_user)):
+    task = tasks_collection.find_one({"_id": ObjectId(task_id)})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    check_user_project_access(user.email, task["project_id"])
+    return task.get("comments", [])
