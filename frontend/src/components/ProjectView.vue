@@ -2,16 +2,30 @@
   <div>
     <h2>Project Tasks</h2>
 
+    <!-- 🔔 Notificacions en temps real -->
+    <div class="notifications">
+      <h3>🔔 Notificacions</h3>
+      <ul>
+        <li v-for="(msg, idx) in notifications" :key="idx">
+          {{ formatNotification(msg) }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- 📝 Llistat de tasques -->
     <ul>
       <li v-for="task in tasks" :key="task._id">
         <b>{{ task.title }}</b> — {{ task.status }}
         <button @click="editTask(task)">Edit</button>
         <button @click="toggleComments(task._id)">Comments</button>
 
-        <!-- Comentaris -->
+        <!-- 💬 Comentaris -->
         <div v-if="showingComments[task._id]" style="margin-top: 10px;">
           <ul>
-            <li v-for="comment in comments[task._id] || []" :key="comment.created_at">
+            <li
+              v-for="comment in comments[task._id] || []"
+              :key="comment.created_at"
+            >
               <i>{{ comment.author }}</i>: {{ comment.content }}
             </li>
           </ul>
@@ -27,6 +41,7 @@
       </li>
     </ul>
 
+    <!-- ➕ Formulari per afegir/editar tasques -->
     <form @submit.prevent="editingTask ? updateTask() : createTask()" style="margin-top: 20px;">
       <input v-model="taskForm.title" placeholder="Title" required />
       <input v-model="taskForm.description" placeholder="Description" />
@@ -42,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -55,23 +70,63 @@ const tasks = ref([])
 const taskForm = ref({ title: '', description: '', status: 'pending' })
 const editingTask = ref(null)
 
-// Comentaris
+// 💬 Comentaris
 const comments = ref({})
 const newComments = ref({})
 const showingComments = ref({})
 
-// Carrega inicial
+// 🔔 Notificacions
+const notifications = ref([])
+let socket = null
+
+function connectWebSocket() {
+  if (!token.value) return
+
+  socket = new WebSocket(`ws://localhost:8000/ws/notifications?token=${token.value}`)
+
+  socket.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data)
+      // Mostra només les notificacions relacionades amb aquest projecte
+      if (!msg.project_id || msg.project_id === projectId.value) {
+        notifications.value.unshift(msg)
+      }
+    } catch (err) {
+      console.error('Error parsing notification:', err)
+    }
+  }
+
+  socket.onclose = () => {
+    console.warn('WebSocket disconnected, reconnecting...')
+    setTimeout(connectWebSocket, 3000)
+  }
+}
+
+function formatNotification(msg) {
+  if (msg.content) return msg.content
+  if (msg.message) return msg.message
+  return JSON.stringify(msg)
+}
+
+// 🚀 Inicialització
 onMounted(() => {
-  if (token.value) loadTasks()
+  if (token.value) {
+    loadTasks()
+    connectWebSocket()
+  }
 })
 
-// Reacciona als canvis d'id de projecte
+onBeforeUnmount(() => {
+  if (socket) socket.close()
+})
+
+// Reacciona a canvis de projecte
 watch(() => route.params.id, newId => {
   projectId.value = newId
   loadTasks()
 })
 
-// CRUD de tasques
+// 📌 CRUD de tasques
 async function loadTasks() {
   const res = await fetch(`${API_URL}/tasks?project_id=${projectId.value}`, {
     headers: { Authorization: `Bearer ${token.value}` },
@@ -118,7 +173,7 @@ async function updateTask() {
   cancelEdit()
 }
 
-// Comentaris
+// 💬 Comentaris
 async function toggleComments(taskId) {
   if (showingComments.value[taskId]) {
     showingComments.value[taskId] = false
@@ -150,3 +205,14 @@ async function submitComment(taskId) {
   newComments.value[taskId] = ''
 }
 </script>
+
+<style scoped>
+.notifications {
+  background-color: #f0f8ff;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+</style>
