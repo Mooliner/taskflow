@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Notifications</h3>
+    <h3>Notificacions</h3>
     <ul>
       <li v-for="(notif, i) in notifications" :key="i">{{ notif }}</li>
     </ul>
@@ -9,6 +9,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { createNotificationsSocket } from '../services/notificationsSocket.js'
 
 const notifications = ref([])
 const ws = ref(null)
@@ -17,15 +18,11 @@ onMounted(() => {
   const token = localStorage.getItem('token')
   if (!token) return
 
-  ws.value = new WebSocket(`ws://localhost:8000/ws/notifications?token=${token}`)
-
-  ws.value.onmessage = event => {
-    notifications.value.push(event.data)
-  }
-
-  ws.value.onclose = () => {
+  ws.value = createNotificationsSocket(token, (message) => {
+    notifications.value.push(message)
+  }, () => {
     console.log('WebSocket closed')
-  }
+  })
 })
 
 onBeforeUnmount(() => {

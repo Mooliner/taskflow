@@ -1,41 +1,41 @@
 <template>
   <div>
     <ul>
-      <li v-for="comment in comments" :key="comment.created_at">
-        <i>{{ comment.author }}</i>: {{ comment.content }}
+      <li v-for="comment in comments" :key="comment.created_at" class="comment-li">
+        {{ comment.author }}: {{ comment.content }}
       </li>
     </ul>
     <form @submit.prevent="submit">
-      <input v-model="newComment" placeholder="Add comment..." required />
-      <button type="submit">Post</button>
+      <input v-model="newComment" placeholder="Afegeix un comentari..." required />
+      <button type="submit">Publica</button>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { fetchComments, postComment } from '../services/api.js'  // ajusta ruta
+
 const props = defineProps({ taskId: String })
 const comments = ref([])
 const newComment = ref('')
+const token = localStorage.getItem('token')
 
 async function load() {
-  const res = await fetch(`http://localhost:8000/tasks/${props.taskId}/comments`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-  })
-  comments.value = await res.json()
+  try {
+    comments.value = await fetchComments(props.taskId, token)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 async function submit() {
-  const res = await fetch(`http://localhost:8000/tasks/${props.taskId}/comments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    body: JSON.stringify({ content: newComment.value }),
-  })
-  comments.value = await res.json()
-  newComment.value = ''
+  try {
+    comments.value = await postComment(props.taskId, newComment.value, token)
+    newComment.value = ''
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 onMounted(load)

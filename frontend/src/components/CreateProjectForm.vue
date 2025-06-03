@@ -1,29 +1,39 @@
 <template>
-  <form @submit.prevent="createProject">
-    <input v-model="projectName" placeholder="Project name" required />
-    <button type="submit">Create Project</button>
-  </form>
+  <div class="form-container">
+    <form @submit.prevent="createProject">
+      <input v-model="projectName" placeholder="Nom del projecte" required /> <br>
+      <input v-model="projectDescription" placeholder="Descripció del projecte" />
+      <button type="submit">Crea un projecte</button>
+    </form>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-const emit = defineEmits(['project-created'])
-const props = defineProps({ userEmail: String })
-const projectName = ref('')
-const API_URL = 'http://localhost:8000'
+import { createProject } from '../services/api.js' // ajusta ruta
 
-async function createProject() {
+const emit = defineEmits(['project-created'])
+const projectName = ref('')
+const projectDescription = ref('')
+
+async function handleCreateProject() {
   const token = localStorage.getItem('token')
-  const res = await fetch(`${API_URL}/projects`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ name: projectName.value, owner_email: props.userEmail }),
-  })
-  const project = await res.json()
-  emit('project-created', project)
-  projectName.value = ''
+  const email = localStorage.getItem('userEmail')
+
+  try {
+    const project = await createProject(
+      {
+        name: projectName.value,
+        description: projectDescription.value,
+        owner_email: email,
+      },
+      token
+    )
+    emit('project-created', project)
+    projectName.value = ''
+    projectDescription.value = ''
+  } catch (error) {
+    alert(error.message)
+  }
 }
 </script>
