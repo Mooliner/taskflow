@@ -8,7 +8,7 @@
 
     <!-- Llista de notificacions (resum) -->
     <div class="notifications">
-      <h3>Notificacions</h3>
+      <h3>Notificacions Directe</h3>
       <ul>
         <li v-for="(msg, idx) in notifications" :key="idx">
           {{ formatNotification(msg) }}

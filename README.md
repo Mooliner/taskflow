@@ -1,44 +1,42 @@
 # TaskFlow
 
-**TaskFlow** és una aplicació de gestió de tasques basada en microserveis. Està dissenyada per a equips de treball que necessiten una eina col·laborativa, escalable i fiable per crear, assignar i fer seguiment de tasques en temps real.
+**TaskFlow** és una aplicació web per a la gestió de tasques col·laboratives. Està pensada per facilitar el treball en equip, permetent la creació, assignació i seguiment de tasques amb notificacions en temps real i una interfície moderna i accessible.
+
+Tot i que inicialment es va concebre sota una arquitectura de microserveis, finalment s’ha optat per un enfocament client-servidor, més adequat per a la complexitat del projecte i el temps disponible, mantenint igualment alguns principis de la computació distribuïda, com la comunicació asíncrona i la separació de responsabilitats lògiques.
 
 ---
 
 ## Objectiu
 
-Desenvolupar una aplicació distribuïda que:
-- Permeti gestionar tasques col·laboratives.
-- Ofereixi notificacions en temps real.
-- Utilitzi arquitectura de microserveis amb comunicació asíncrona.
-- Sigui tolerant a fallades i escalable.
+L’objectiu principal ha estat desenvolupar una aplicació distribuïda funcional, capaç de:
+- Permetre la gestió eficient de tasques en equips de treball.
+- Integrar notificacions en temps real a través de WebSockets.
+- Implementar una arquitectura modular basada en client-servidor.
+- Mantenir un sistema escalable i fàcilment extensible en un futur.
 
 ---
 
 ## Funcionalitats
 
-- Creació i assignació de tasques
-- Gestió d'estats i prioritats
-- Autenticació d'usuaris
-- Notificacions en temps real
-- Interfície web moderna i intuïtiva
+- Registre i autenticació d’usuaris (basat en JSON Web Tokens).
+- Creació, assignació i gestió de tasques amb estats i prioritats.
+- Notificació en temps real dels canvis de tasca via WebSocket.
+- Interfície SPA moderna desenvolupada amb Vue.js.
+- Backend REST desenvolupat amb FastAPI i MongoDB com a base de dades.
 
 ---
 
 ## Arquitectura del Sistema
 
-L’arquitectura de **TaskFlow** està basada en microserveis, amb els següents components principals:
+L’arquitectura de **TaskFlow** segueix el model client-servidor:
 
-- **Client Web (Vue.js):** Interfície d’usuari per gestionar tasques i rebre notificacions en temps real.
-- **API Gateway (FastAPI):** Punt d’entrada que ruteja les peticions als diferents microserveis i gestiona la seguretat.
-- **Servei d’Usuaris:** Gestió d’usuaris, autenticació i permisos.
-- **Servei de Tasques:** Creació, actualització i assignació de tasques.
-- **Servei de Notificacions:** Enviament de notificacions en temps real via WebSockets.
-- **Servei d’Estats:** Control i sincronització de l’estat de les tasques per garantir coherència.
-- **MongoDB:** Base de dades distribuïda per emmagatzemar dades d’usuaris i tasques.
-- **RabbitMQ:** Sistema de missatgeria per a comunicació asíncrona entre serveis.
-- **BetterStack / UptimeRobot:** Monitoratge i alertes per assegurar la disponibilitat i tolerància a fallades.
+- **Frontend (Vue.js)**: Aplicació que permet interactuar amb les funcionalitats de l’aplicació de manera intuïtiva i reactiva.
+- **Backend (FastAPI)**: Proporciona l’API REST per a la gestió de tasques i usuaris, incloent autenticació, lògica de negoci i notificacions.
+- **WebSocket Server**: Integrat al backend per gestionar les notificacions en temps real.
+- **MongoDB**: Base de dades NoSQL per emmagatzemar usuaris i tasques.
+- **JWT**: Gestió segura de sessions i autenticació.
 
-Aquest model permet una escalabilitat i mantenibilitat elevades, amb components independents que comuniquen mitjançant missatges asíncrons i bases de dades distribuïdes.
+Aquesta arquitectura facilita la comunicació entre components, mantenint una separació clara entre la presentació i la lògica de negoci, amb suport per comunicació asíncrona (WebSocket).
 
 ---
 
@@ -46,12 +44,12 @@ Aquest model permet una escalabilitat i mantenibilitat elevades, amb components 
 
 | Component       | Tecnologia         |
 |----------------|--------------------|
-| Backend         | Python + FastAPI   |
-| Frontend        | Vue.js             |
+| Frontend         |Vue.js   |
+| Backend API        | FastAPI (Python)           |
 | Base de dades   | MongoDB            |
-| Missatgeria     | RabbitMQ           |
-| Monitoratge     | BetterStack, UptimeRobot |
-| Autenticació    | JWT                |
+| Notificacions     | WebSocket (FastAPI)           |
+| Autenticació     | JWT (Bearer tokens) |
+| Control de versió    | Git + GitHub                |
 
 ---
 
@@ -59,12 +57,52 @@ Aquest model permet una escalabilitat i mantenibilitat elevades, amb components 
 ```
 TaskFlow/
 ├── backend/
-│   ├── users/             # Servei d’usuaris (FastAPI)
-│   └── tasks/             # Servei de tasques (en construcció)
+│   ├── api/                      # Endpoints REST i WebSocket
+│   │   ├── notificacions.py
+│   │   ├── projects.py
+│   │   ├── tasks.py
+│   │   ├── users.py
+│   │   └── websocket.py
+│   ├── db/                       # Connexió amb MongoDB
+│   │   └── mongo.py
+│   ├── models/                   # Esquemes Pydantic per a les dades
+│   │   ├── commnet.py
+│   │   ├── project.py
+│   │   ├── task.py
+│   │   └── user.py
+│   ├── services/                # Lògica de negoci i gestió interna
+│   │   ├── auth.py
+│   │   ├── history.py
+│   │   ├── notification.py
+│   │   ├── project.py
+│   │   └── websocket_manager.py
+│   ├── config.py                # Configuració general del backend
+│   └── main.py                  # Punt d’entrada FastAPI
+│
 ├── frontend/
-│   └── vue-app/           # Interfície web (en construcció)
-├── requirements.txt       # Dependències de Python
-├── README.md              # Documentació del projecte
+│   └── src/
+│       ├── assets/              # Recursos visuals i estils globals
+│       │   ├── styles.css
+│       │   └── vue.svg
+│       ├── components/          # Components reutilitzables Vue
+│       │   ├── AuthForm.vue
+│       │   ├── CommentSection.vue
+│       │   ├── CreateProjectForm.vue
+│       │   ├── ProjectList.vue
+│       │   ├── ProjectNotifications.vue
+│       │   ├── TaskForm.vue
+│       │   └── TaskList.vue
+│       ├── services/            # Connexió amb l'API backend
+│       │   └── api.js
+│       ├── views/               # Vistes principals de l'aplicació
+│       │   ├── Home.vue
+│       │   └── ProjectView.vue
+│       ├── App.vue              # Component arrel de Vue
+│       ├── main.js              # Inicialització de Vue
+│       └── router.js            # Gestió de rutes
+│
+└── requirements.txt             # Dependències del backend (Python)
+      
 ```
 ---
 
